@@ -1,9 +1,12 @@
 {
   "dependencies": {
+    "bignumber": "^1.1.0",
     "dotenv": "^16.0.3",
     "eslint": "^8.32.0",
+    "inquirer": "^9.1.4",
     "node": "^18.13.0",
     "nodemon": "^2.0.20",
-    "typescript": "^4.9.4"
-  }
+    "stellar-sdk": "^10.4.1"
+  },
+  "type": "module"
 }
