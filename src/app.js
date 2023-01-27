@@ -103,6 +103,7 @@ const availableAssetsInTestnet = [
 function findAsset(assetCode, availableAssets) {
   return availableAssets.find((asset) => asset.code === assetCode);
 }
+const exchangeRequestData = [
   {
     type: "list",
     choices: ["yXLM", "USDC", "ARS", "ARST", "AQUA", "BTC", "ETH", "XLM"],
@@ -110,12 +111,36 @@ function findAsset(assetCode, availableAssets) {
     message: "Which asset wuld you like to exchange?",
   },
   { type: "input", name: "amount", message: "How much?" },
+  {
+    type: "confirm",
+    name: "newTransaction",
+    message: "Would you like to request a new exchange?",
+  },
 ];
-function receiveAssetInputs() {
-  inquirer.prompt(questions).then((answers) => {
-    console.log(
-      `Hi ${answers.asset},${answers.amount}, ${answers.stellarNetwork}!`
-    );
+async function receiveAssetInputs() {
+  inquirer.prompt(exchangeRequestData).then(async (userInputs) => {
+    if (stellarNetwork === "Testnet") {
+      await exchangeAssetInTestnet(userInputs.assetCode, userInputs.amount);
+    }
   });
 }
-receiveAssetInputs();
+
+const networkOptions = [
+  {
+    type: "list",
+    choices: ["Testnet", "Public"],
+    name: "stellarNetwork",
+    message: "In which network are you working?",
+  },
+];
+async function checkNetwork() {
+  inquirer.prompt(networkOptions).then(async (network) => {
+    stellarNetwork = network;
+    await receiveAssetInputs();
+  });
+}
+async function init() {
+  await checkNetwork();
+}
+
+await init();
