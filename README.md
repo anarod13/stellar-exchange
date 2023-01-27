@@ -4,12 +4,15 @@ A console application write in Node.js to exchange assets in Stellar's Network
 This applcation is set to exchange a limited number of assets for yUSDC, if you wish you can update code and allow as many assets as you want
 
 ## How to run it locally
-To run it locally you need to follow the next steps
-1. Make a copy of the file `env.dist`, save it at the rrot of your project and rename it `.env`, Update the required values with your secret key and the slippage percentage you'd like to set in number.
+To run it locally you'll need to clone this repository in your local machine and follow the next steps
+
+1. Make a copy of the file `env.dist`, save it at the root of your project and rename it `.env`, Update the required values with your secret key and the slippage percentage you'd like to set in number.
 
 Ex:
-``VITE_USER_PRIVATE_KEY=SA2KDSSCU7KWDA4P5MCB5V23SDWCYJQ64DHSN4PGBFVYBQ4DTJOFC5QB
-VITE_SLIPPAGE_PERCENT=2``
+
+``VITE_USER_PRIVATE_KEY=SA2KDSSCU7KWDA4P5MCB5V23SDWCYJQ64DHSN4PGBFVYBQ4DTJOFC5QB``
+
+``VITE_SLIPPAGE_PERCENT=2``
 
 2. Run `npm i` to install dependencies
 3. Run `npm run app` to run it
