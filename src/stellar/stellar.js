@@ -7,6 +7,9 @@ import {
 } from "stellar-sdk";
 import GetStrictSendPathsError from "./error/GetStrictSendPathsError.js";
 import SetTrustlineError from "./error/SetTrustlineError.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const TESTNET_STELLAR_NETWORK = "https://horizon-testnet.stellar.org";
 const TESTNET_STELLAR_PASSPHRASE = "Test SDF Network ; September 2015";
@@ -47,7 +50,6 @@ export async function findStrictSendPaths(
 }
 
 export async function sendStrictAsset(
-  userPublicKey,
   assetToSend,
   amountToSend,
   assetToReceive,
@@ -67,18 +69,18 @@ export async function sendStrictAsset(
 
   const truslineOperation = await setTrustlineOperation(
     destinationAsset,
-    userKeyPair.publicKey
+    userKeyPair.publicKey()
   );
   const strictSendOperation = Operation.pathPaymentStrictSend({
     sendAsset: sourceAsset,
     sendAmount: amountToSend,
     destAsset: destinationAsset,
     destMin: minAmountToReceive,
-    destination: userPublicKey,
+    destination: userKeyPair.publicKey(),
   });
 
   const fee = await stellarServer.feeStats();
-  const userAccount = await stellarServer.loadAccount(userKeyPair.publicKey);
+  const userAccount = await stellarServer.loadAccount(userKeyPair.publicKey());
   const transactionBuilder = new TransactionBuilder(userAccount, {
     fee: fee.fee_charged.p90,
     networkPassphrase: stellarPassphrase,
