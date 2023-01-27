@@ -1,5 +1,6 @@
 import inquirer from "inquirer";
 import Asset from "./entities/Asset.js";
+import { findStrictSendPaths, sendStrictAsset } from "./stellar/stellar.js";
 import BigNumber from "bignumber.js";
 import dotenv from "dotenv";
 
@@ -18,6 +19,11 @@ function calculateMinAmountToReceive(amountToSell, swapRate) {
 const yUSDC = new Asset(
   "yUSDC",
   "GDGTVWSM4MGS4T7Z6W4RPWOCHE2I6RDFCIFZGS3DOA63LWQTRNZNTTFF",
+  false
+);
+const yUSDCInTestnet = new Asset(
+  "yUSDC",
+  "GCIZCIQUDSCQT5SJJSF2CUWCLPFL7R5TKIYL4X7LBO3RFGCEBG7GH5BS",
   false
 );
 
@@ -99,6 +105,36 @@ const availableAssetsInTestnet = [
   new Asset("XLM", "", true),
 ];
 
+async function exchangeAsset(
+  assetCode,
+  amountToExchange,
+  availableAssets,
+  yUSDC
+) {
+  const assetToExchange = findAsset(assetCode, availableAssets);
+  let exchangeRate;
+  try {
+    exchangeRate = Number(
+      await findStrictSendPaths(assetToExchange, 1, yUSDC, stellarNetwork)
+    );
+  } catch {
+    return console.log("No offer available found!");
+  }
+  const minAmountToReceive = calculateMinAmountToReceive(
+    amountToExchange,
+    exchangeRate
+  );
+  try {
+    await sendStrictAsset(
+      assetToExchange,
+      amountToExchange,
+      yUSDC,
+      minAmountToReceive
+    );
+  } catch {
+    console.log("Transaction failed, please try again");
+  }
+}
 
 function findAsset(assetCode, availableAssets) {
   return availableAssets.find((asset) => asset.code === assetCode);
@@ -119,8 +155,21 @@ const exchangeRequestData = [
 ];
 async function receiveAssetInputs() {
   inquirer.prompt(exchangeRequestData).then(async (userInputs) => {
+    console.log("Procesing...");
     if (stellarNetwork === "Testnet") {
-      await exchangeAssetInTestnet(userInputs.assetCode, userInputs.amount);
+      await exchangeAsset(
+        userInputs.assetCode,
+        userInputs.amount,
+        availableAssetsInTestnet,
+        yUSDCInTestnet
+      );
+    } else {
+      await exchangeAsset(
+        userInputs.assetCode,
+        userInputs.amount,
+        availableAssetsInPublicNet,
+        yUSDC
+      );
     }
   });
 }
