@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "app": "node src/app.js"
+  },
   "dependencies": {
     "bignumber": "^1.1.0",
     "dotenv": "^16.0.3",

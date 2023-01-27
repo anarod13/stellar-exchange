@@ -1,0 +1,46 @@
+import Asset from "../entities/Asset.js";
+
+export const yUSDC = new Asset(
+  "yUSDC",
+  "GCIZCIQUDSCQT5SJJSF2CUWCLPFL7R5TKIYL4X7LBO3RFGCEBG7GH5BS",
+  false
+);
+
+export const availableAssets = [
+  new Asset(
+    "yXLM",
+    "GA7OU2XXMKGJTOFFSYTSJIY3BPTKUQ4RIXYRIHNTH44JTD5PI76IYIS6",
+    false
+  ),
+  new Asset(
+    "USDC",
+    "GB7GQWBHNH53KEPRA47Z2ZL3O64TG5JBSMXAOOO274N7X2IOSEVTF56O",
+    false
+  ),
+  new Asset(
+    "ARS",
+    "GAMLUKVCVJ5ZFKFCFNU7YVW44XTOHMP373SBHL5FIBA6XLPGZANF72WO",
+    false
+  ),
+  new Asset(
+    "ARST",
+    "GA7BVCC3M6FP6J3JKQK2DQFNCAYDLBM6XL6FNXFLHBVFF5QPY63C2KKT",
+    false
+  ),
+  new Asset(
+    "AQUA",
+    "GBQI4LHFSHGYG5RETPYMNC2DUMZMHKM5YHZDWCA64OVDTAOELMX46O75",
+    false
+  ),
+  new Asset(
+    "BTC",
+    "GDUTBOC5AH5ZH2EXUXCOSDQNVB3HMJQQABPGU26BJZMWCZUOFSMMD5HN",
+    false
+  ),
+  new Asset(
+    "ETH",
+    "GACKTFQGP7PML6E5VZJUMM7ZVZACAGBD65DMZKUX5F6ATWNLL7GLESWG",
+    false
+  ),
+  new Asset("XLM", "", true),
+];
