@@ -1,12 +1,32 @@
 import inquirer from "inquirer";
 import Asset from "./entities/Asset.js";
+import BigNumber from "bignumber.js";
+import dotenv from "dotenv";
+
+dotenv.config();
+let stellarNetwork;
+
+function convertAmountToBigNumber(amount) {
+  return new BigNumber(amount).toFixed(7).toString();
+}
+function calculateMinAmountToReceive(amountToSell, swapRate) {
+  const slippagePercent = process.env.VITE_SLIPPAGE_PERCENT / 100;
+  const minAmountToReceive =
+    Number(amountToSell) * swapRate * (1 - slippagePercent);
+  return convertAmountToBigNumber(minAmountToReceive);
+}
+const yUSDC = new Asset(
+  "yUSDC",
+  "GDGTVWSM4MGS4T7Z6W4RPWOCHE2I6RDFCIFZGS3DOA63LWQTRNZNTTFF",
+  false
+);
+
 const availableAssetsInPublicNet = [
   new Asset(
     "yXLM",
     "GARDNV3Q7YGT4AKSDF25LT32YSCCW4EV22Y2TV3I2PU2MMXJTEDL5T55",
     false
   ),
-
   new Asset(
     "USDC",
     "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
@@ -39,6 +59,7 @@ const availableAssetsInPublicNet = [
   ),
   new Asset("XLM", "", true),
 ];
+
 const availableAssetsInTestnet = [
   new Asset(
     "yXLM",
@@ -78,13 +99,10 @@ const availableAssetsInTestnet = [
   new Asset("XLM", "", true),
 ];
 
-const questions = [
-  {
-    type: "list",
-    choices: ["Testnet", "Public"],
-    name: "stellarNetwork",
-    message: "In which network are you working?",
-  },
+
+function findAsset(assetCode, availableAssets) {
+  return availableAssets.find((asset) => asset.code === assetCode);
+}
   {
     type: "list",
     choices: ["yXLM", "USDC", "ARS", "ARST", "AQUA", "BTC", "ETH", "XLM"],
