@@ -118,7 +118,9 @@ async function exchangeAsset(
       await findStrictSendPaths(assetToExchange, 1, yUSDC, stellarNetwork)
     );
   } catch {
-    return console.log("No offer available found!");
+    console.log("No offer available found! Please try with a different asset");
+    receiveAssetInputs();
+    return;
   }
   const minAmountToReceive = calculateMinAmountToReceive(
     amountToExchange,
@@ -131,8 +133,11 @@ async function exchangeAsset(
       yUSDC,
       minAmountToReceive
     );
+    console.log("Successfull exchange!");
+    inquireForNewExchanges();
   } catch {
     console.log("Transaction failed, please try again");
+    receiveAssetInputs();
   }
 }
 
@@ -147,15 +152,10 @@ const exchangeRequestData = [
     message: "Which asset wuld you like to exchange?",
   },
   { type: "input", name: "amount", message: "How much?" },
-  {
-    type: "confirm",
-    name: "newTransaction",
-    message: "Would you like to request a new exchange?",
-  },
 ];
 async function receiveAssetInputs() {
   inquirer.prompt(exchangeRequestData).then(async (userInputs) => {
-    console.log("Procesing...");
+    console.log("Submitting request, please wait...");
     if (stellarNetwork === "Testnet") {
       await exchangeAsset(
         userInputs.assetCode,
@@ -182,14 +182,32 @@ const networkOptions = [
     message: "In which network are you working?",
   },
 ];
-async function checkNetwork() {
-  inquirer.prompt(networkOptions).then(async (network) => {
-    stellarNetwork = network;
-    await receiveAssetInputs();
+async function checkNetwork(networkSelectionCallback = () => {}) {
+  inquirer.prompt(networkOptions).then(async (userSelection) => {
+    stellarNetwork = userSelection.stellarNetwork;
+    networkSelectionCallback();
+  });
+}
+
+const newExchangeEnquiry = [
+  {
+    type: "confirm",
+    name: "newTransaction",
+    message: "Would you like to request a new exchange?",
+  },
+];
+
+async function inquireForNewExchanges() {
+  inquirer.prompt(newExchangeEnquiry).then(async (userSelection) => {
+    if (userSelection.newTransaction) {
+      receiveAssetInputs();
+    } else {
+      console.log("See you soon!");
+    }
   });
 }
 async function init() {
-  await checkNetwork();
+  await checkNetwork(receiveAssetInputs);
 }
 
 await init();
