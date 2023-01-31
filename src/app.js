@@ -1,6 +1,6 @@
 import inquirer from "inquirer";
-import { findStrictSendPaths, sendStrictAsset } from "./stellar/stellar.js";
-import { calculateMinAmountToReceive } from "./helpers/exchangeHelpers.js";
+import { findStrictSendPaths, findStrictReceivePaths, sendStrictAsset, strictReceiveAsset } from "./stellar/stellar.js";
+import { calculateMinAmountToReceive, calculateMaxAmountToSend } from "./helpers/exchangeHelpers.js";
 import {
   yUSDC as yUSDCInTestnet,
   availableAssets as availableAssetsInTestnet,
@@ -17,8 +17,12 @@ async function exchangeAsset(
   const assetToExchange = findAsset(assetCode, availableAssets);
   let exchangeRate;
   try {
+    // console.log("ASSET TO EXCHANGE", assetToExchange);
+    // console.log("yusdc", yUSDC);
+
     exchangeRate = Number(
-      await findStrictSendPaths(assetToExchange, 1, yUSDC, stellarNetwork)
+      // await findStrictSendPaths(assetToExchange, 1, yUSDC, stellarNetwork)
+      await findStrictReceivePaths(assetToExchange, yUSDC, 1, stellarNetwork)
     );
   } catch {
     console.log("No offer available found! Please try with a different asset");
@@ -30,15 +34,17 @@ async function exchangeAsset(
     exchangeRate
   );
   try {
-    await sendStrictAsset(
-      assetToExchange,
-      amountToExchange,
-      yUSDC,
-      minAmountToReceive
-    );
+    // await sendStrictAsset(
+    //   assetToExchange,
+    //   amountToExchange,
+    //   yUSDC,
+    //   minAmountToReceive
+    // );
+    const maxAmountToSend = calculateMaxAmountToSend(amountToExchange, exchangeRate);
+    const txResult = await strictReceiveAsset(assetToExchange, amountToExchange, maxAmountToSend, yUSDC);
     console.log("Successfull exchange!");
     inquireForNewExchanges();
-  } catch {
+  } catch(error) {
     console.log("Transaction failed, please try again");
     enquireAssetExchangeData();
   }

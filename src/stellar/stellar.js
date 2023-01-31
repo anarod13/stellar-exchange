@@ -49,6 +49,35 @@ export async function findStrictSendPaths(
   }
 }
 
+export async function findStrictReceivePaths(
+  assetToSend,
+  assetToReceive,
+  destinationAmount,
+  network
+) {
+  setStellarNetwork(network);
+  let sourceAsset;
+  if (assetToSend.isNative) {
+    sourceAsset = StellarAsset.native();
+  } else {
+    sourceAsset = new Asset(assetToSend.code, assetToSend.issuer);
+  }
+  const destinationAsset = new Asset(
+    assetToReceive.code,
+    assetToReceive.issuer
+  );
+
+  try {
+    const strictReceivePaths = await stellarServer
+      .strictReceivePaths([sourceAsset], destinationAsset, destinationAmount)
+      .call();
+    return strictReceivePaths.records[0].source_amount;
+  } catch (error) {
+    console.log("error", error)
+    throw new GetStrictSendPathsError(`${error}`);
+  }
+}
+
 export async function sendStrictAsset(
   assetToSend,
   amountToSend,
@@ -114,4 +143,45 @@ function setStellarNetwork(network) {
     network === "Public"
       ? PUBLIC_STELLAR_PASSPHRASE
       : TESTNET_STELLAR_PASSPHRASE;
+}
+
+
+export async function strictReceiveAsset(
+  sendAsset,
+  amountToReceive,
+  maxAmountToSend,
+  assetToReceive,
+) {
+  const userKeyPair = Keypair.fromSecret(process.env.VITE_USER_PRIVATE_KEY);
+  let sourceAsset;
+  if (sendAsset.isNative) {
+    sourceAsset = StellarAsset.native();
+  } else {
+    sourceAsset = new Asset(sendAsset.code, sendAsset.issuer);
+  }
+  const destinationAsset = new Asset(
+    assetToReceive.code,
+    assetToReceive.issuer
+  );
+
+  const strictReceiveOperation = Operation.pathPaymentStrictReceive({
+    sendAsset: sourceAsset,
+    sendMax: maxAmountToSend,
+    destination: userKeyPair.publicKey(),
+    destAsset: destinationAsset,
+    destAmount: amountToReceive
+  });
+
+  const fee = await stellarServer.feeStats();
+  const userAccount = await stellarServer.loadAccount(userKeyPair.publicKey());
+  const transactionBuilder = new TransactionBuilder(userAccount, {
+    fee: fee.fee_charged.p90,
+    networkPassphrase: stellarPassphrase,
+  });
+
+  transactionBuilder.addOperation(strictReceiveOperation);
+
+  const transaction = transactionBuilder.setTimeout(30).build();
+  transaction.sign(userKeyPair);
+  const txResult = await stellarServer.submitTransaction(transaction);
 }

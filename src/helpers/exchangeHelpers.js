@@ -14,3 +14,10 @@ export function calculateMinAmountToReceive(amountToSell, exchangeRate) {
     Number(amountToSell) * exchangeRate * (1 - slippagePercent);
   return convertAmountToBigNumber(minAmountToReceive);
 }
+
+export function calculateMaxAmountToSend(amountToSell, exchangeRate) {
+  const slippagePercent = process.env.VITE_SLIPPAGE_PERCENT / 100;
+  const maxAmountToSend =
+    Number(amountToSell) * exchangeRate * (1 + slippagePercent);
+  return convertAmountToBigNumber(maxAmountToSend);
+}
