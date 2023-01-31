@@ -60,7 +60,7 @@ const assetExchangeEnquiry = [
     name: "assetCode",
     message: "Which asset wuld you like to exchange?",
   },
-  { type: "input", name: "amount", message: "How much?" },
+  { type: "input", name: "amount", message: "How much yUSDC would you like to receive?" },
 ];
 async function enquireAssetExchangeData() {
   inquirer.prompt(assetExchangeEnquiry).then(async (userInputs) => {
