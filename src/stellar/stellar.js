@@ -8,6 +8,7 @@ import {
 import GetStrictSendPathsError from "./error/GetStrictSendPathsError.js";
 import SetTrustlineError from "./error/SetTrustlineError.js";
 import dotenv from "dotenv";
+import BigNumber from "bignumber.js";
 
 dotenv.config();
 
@@ -186,4 +187,10 @@ export async function strictReceiveAsset(
   const transaction = transactionBuilder.setTimeout(30).build();
   transaction.sign(userKeyPair);
   const txResult = await stellarServer.submitTransaction(transaction);
+  if (txResult.successful)
+  {
+    const tx = await stellarServer.payments().forTransaction(txResult.hash).call()
+    console.log(`Amount paid: ${tx.records[0].source_amount}`)
+    console.log(`Price per yUSDC: ${(new BigNumber(tx.records[0].source_amount).div(new BigNumber(tx.records[0].amount))).toString()}`)
+  }
 }
