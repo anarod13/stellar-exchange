@@ -58,7 +58,8 @@ export async function findStrictReceivePaths(
   setStellarNetwork(network);
   let sourceAsset;
   if (assetToSend.isNative) {
-    sourceAsset = StellarAsset.native();
+    // sourceAsset = StellarAsset.native();
+    sourceAsset = Asset.native();
   } else {
     sourceAsset = new Asset(assetToSend.code, assetToSend.issuer);
   }
@@ -155,7 +156,8 @@ export async function strictReceiveAsset(
   const userKeyPair = Keypair.fromSecret(process.env.VITE_USER_PRIVATE_KEY);
   let sourceAsset;
   if (sendAsset.isNative) {
-    sourceAsset = StellarAsset.native();
+    // sourceAsset = StellarAsset.native();
+    sourceAsset = Asset.native();
   } else {
     sourceAsset = new Asset(sendAsset.code, sendAsset.issuer);
   }
