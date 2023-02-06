@@ -9,6 +9,8 @@ import GetStrictSendPathsError from "./error/GetStrictSendPathsError.js";
 import SetTrustlineError from "./error/SetTrustlineError.js";
 import dotenv from "dotenv";
 import BigNumber from "bignumber.js";
+import StrictReceivePathError from "./error/StrictReceivePathError.js";
+import GetStrictReceivePathsError from "./error/GetStrictReceivePathsError.js";
 
 dotenv.config();
 
@@ -75,7 +77,7 @@ export async function findStrictReceivePaths(
     return strictReceivePaths.records[0].source_amount;
   } catch (error) {
     console.log("error", error);
-    throw new GetStrictSendPathsError(`${error}`);
+    throw new GetStrictReceivePathsError(`${error}`);
   }
 }
 
@@ -101,6 +103,7 @@ export async function sendStrictAsset(
     destinationAsset,
     userKeyPair.publicKey()
   );
+
   const strictSendOperation = Operation.pathPaymentStrictSend({
     sendAsset: sourceAsset,
     sendAmount: amountToSend,
@@ -121,7 +124,25 @@ export async function sendStrictAsset(
 
   const transaction = transactionBuilder.setTimeout(30).build();
   transaction.sign(userKeyPair);
-  await stellarServer.submitTransaction(transaction);
+  try {
+    const txResult = await stellarServer.submitTransaction(transaction);
+    if (txResult.successful) {
+      const tx = await stellarServer
+        .payments()
+        .forTransaction(txResult.hash)
+        .call();
+      console.log(`Amount paid: ${tx.records[0].source_amount}`);
+      console.log(
+        `Price per yUSDC: ${new BigNumber(tx.records[0].source_amount)
+          .div(new BigNumber(tx.records[0].amount))
+          .toString()}`
+      );
+    }
+  } catch (error) {
+    throw new StrictSendPathError(
+      `${error.response.data.extras.result_codes.operations}`
+    );
+  }
 }
 
 async function setTrustlineOperation(asset, userPublicKey) {
@@ -189,17 +210,23 @@ export async function strictReceiveAsset(
 
   const transaction = transactionBuilder.setTimeout(30).build();
   transaction.sign(userKeyPair);
-  const txResult = await stellarServer.submitTransaction(transaction);
-  if (txResult.successful) {
-    const tx = await stellarServer
-      .payments()
-      .forTransaction(txResult.hash)
-      .call();
-    console.log(`Amount paid: ${tx.records[0].source_amount}`);
-    console.log(
-      `Price per yUSDC: ${new BigNumber(tx.records[0].source_amount)
-        .div(new BigNumber(tx.records[0].amount))
-        .toString()}`
+  try {
+    const txResult = await stellarServer.submitTransaction(transaction);
+    if (txResult.successful) {
+      const tx = await stellarServer
+        .payments()
+        .forTransaction(txResult.hash)
+        .call();
+      console.log(`Amount paid: ${tx.records[0].source_amount}`);
+      console.log(
+        `Price per yUSDC: ${new BigNumber(tx.records[0].source_amount)
+          .div(new BigNumber(tx.records[0].amount))
+          .toString()}`
+      );
+    }
+  } catch (error) {
+    throw new StrictReceivePathError(
+      `${error.response.data.extras.result_codes.operations}`
     );
   }
 }
