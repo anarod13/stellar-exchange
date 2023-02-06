@@ -58,6 +58,7 @@ async function exchangeAsset(
     console.log("Successfull exchange!");
     inquireForNewExchanges();
   } catch (error) {
+    console.log(`${error}`);
     console.log("Transaction failed, please try again");
     enquireAssetExchangeData();
   }
