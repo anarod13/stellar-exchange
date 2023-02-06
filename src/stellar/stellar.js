@@ -59,7 +59,6 @@ export async function findStrictReceivePaths(
   setStellarNetwork(network);
   let sourceAsset;
   if (assetToSend.isNative) {
-    // sourceAsset = StellarAsset.native();
     sourceAsset = Asset.native();
   } else {
     sourceAsset = new Asset(assetToSend.code, assetToSend.issuer);
@@ -75,7 +74,7 @@ export async function findStrictReceivePaths(
       .call();
     return strictReceivePaths.records[0].source_amount;
   } catch (error) {
-    console.log("error", error)
+    console.log("error", error);
     throw new GetStrictSendPathsError(`${error}`);
   }
 }
@@ -147,17 +146,15 @@ function setStellarNetwork(network) {
       : TESTNET_STELLAR_PASSPHRASE;
 }
 
-
 export async function strictReceiveAsset(
   sendAsset,
   amountToReceive,
   maxAmountToSend,
-  assetToReceive,
+  assetToReceive
 ) {
   const userKeyPair = Keypair.fromSecret(process.env.VITE_USER_PRIVATE_KEY);
   let sourceAsset;
   if (sendAsset.isNative) {
-    // sourceAsset = StellarAsset.native();
     sourceAsset = Asset.native();
   } else {
     sourceAsset = new Asset(sendAsset.code, sendAsset.issuer);
@@ -172,7 +169,7 @@ export async function strictReceiveAsset(
     sendMax: maxAmountToSend,
     destination: userKeyPair.publicKey(),
     destAsset: destinationAsset,
-    destAmount: amountToReceive
+    destAmount: amountToReceive,
   });
 
   const fee = await stellarServer.feeStats();
@@ -187,10 +184,16 @@ export async function strictReceiveAsset(
   const transaction = transactionBuilder.setTimeout(30).build();
   transaction.sign(userKeyPair);
   const txResult = await stellarServer.submitTransaction(transaction);
-  if (txResult.successful)
-  {
-    const tx = await stellarServer.payments().forTransaction(txResult.hash).call()
-    console.log(`Amount paid: ${tx.records[0].source_amount}`)
-    console.log(`Price per yUSDC: ${(new BigNumber(tx.records[0].source_amount).div(new BigNumber(tx.records[0].amount))).toString()}`)
+  if (txResult.successful) {
+    const tx = await stellarServer
+      .payments()
+      .forTransaction(txResult.hash)
+      .call();
+    console.log(`Amount paid: ${tx.records[0].source_amount}`);
+    console.log(
+      `Price per yUSDC: ${new BigNumber(tx.records[0].source_amount)
+        .div(new BigNumber(tx.records[0].amount))
+        .toString()}`
+    );
   }
 }

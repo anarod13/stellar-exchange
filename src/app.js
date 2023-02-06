@@ -1,6 +1,14 @@
 import inquirer from "inquirer";
-import { findStrictSendPaths, findStrictReceivePaths, sendStrictAsset, strictReceiveAsset } from "./stellar/stellar.js";
-import { calculateMinAmountToReceive, calculateMaxAmountToSend } from "./helpers/exchangeHelpers.js";
+import {
+  findStrictSendPaths,
+  findStrictReceivePaths,
+  sendStrictAsset,
+  strictReceiveAsset,
+} from "./stellar/stellar.js";
+import {
+  calculateMinAmountToReceive,
+  calculateMaxAmountToSend,
+} from "./helpers/exchangeHelpers.js";
 import {
   yUSDC as yUSDCInTestnet,
   availableAssets as availableAssetsInTestnet,
@@ -17,9 +25,6 @@ async function exchangeAsset(
   const assetToExchange = findAsset(assetCode, availableAssets);
   let exchangeRate;
   try {
-    // console.log("ASSET TO EXCHANGE", assetToExchange);
-    // console.log("yusdc", yUSDC);
-
     exchangeRate = Number(
       // await findStrictSendPaths(assetToExchange, 1, yUSDC, stellarNetwork)
       await findStrictReceivePaths(assetToExchange, yUSDC, 1, stellarNetwork)
@@ -40,11 +45,19 @@ async function exchangeAsset(
     //   yUSDC,
     //   minAmountToReceive
     // );
-    const maxAmountToSend = calculateMaxAmountToSend(amountToExchange, exchangeRate);
-    const txResult = await strictReceiveAsset(assetToExchange, amountToExchange, maxAmountToSend, yUSDC);
+    const maxAmountToSend = calculateMaxAmountToSend(
+      amountToExchange,
+      exchangeRate
+    );
+    const txResult = await strictReceiveAsset(
+      assetToExchange,
+      amountToExchange,
+      maxAmountToSend,
+      yUSDC
+    );
     console.log("Successfull exchange!");
     inquireForNewExchanges();
-  } catch(error) {
+  } catch (error) {
     console.log("Transaction failed, please try again");
     enquireAssetExchangeData();
   }
@@ -60,7 +73,11 @@ const assetExchangeEnquiry = [
     name: "assetCode",
     message: "Which asset wuld you like to exchange?",
   },
-  { type: "input", name: "amount", message: "How much yUSDC would you like to receive?" },
+  {
+    type: "input",
+    name: "amount",
+    message: "How much yUSDC would you like to receive?",
+  },
 ];
 async function enquireAssetExchangeData() {
   inquirer.prompt(assetExchangeEnquiry).then(async (userInputs) => {
