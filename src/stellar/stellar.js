@@ -8,6 +8,7 @@ import {
 import GetStrictSendPathsError from "./error/GetStrictSendPathsError.js";
 import SetTrustlineError from "./error/SetTrustlineError.js";
 import dotenv from "dotenv";
+import BigNumber from "bignumber.js";
 
 dotenv.config();
 
@@ -45,6 +46,35 @@ export async function findStrictSendPaths(
       .call();
     return strictSendPaths.records[0].destination_amount;
   } catch (error) {
+    throw new GetStrictSendPathsError(`${error}`);
+  }
+}
+
+export async function findStrictReceivePaths(
+  assetToSend,
+  assetToReceive,
+  destinationAmount,
+  network
+) {
+  setStellarNetwork(network);
+  let sourceAsset;
+  if (assetToSend.isNative) {
+    sourceAsset = Asset.native();
+  } else {
+    sourceAsset = new Asset(assetToSend.code, assetToSend.issuer);
+  }
+  const destinationAsset = new Asset(
+    assetToReceive.code,
+    assetToReceive.issuer
+  );
+
+  try {
+    const strictReceivePaths = await stellarServer
+      .strictReceivePaths([sourceAsset], destinationAsset, destinationAmount)
+      .call();
+    return strictReceivePaths.records[0].source_amount;
+  } catch (error) {
+    console.log("error", error);
     throw new GetStrictSendPathsError(`${error}`);
   }
 }
@@ -114,4 +144,56 @@ function setStellarNetwork(network) {
     network === "Public"
       ? PUBLIC_STELLAR_PASSPHRASE
       : TESTNET_STELLAR_PASSPHRASE;
+}
+
+export async function strictReceiveAsset(
+  sendAsset,
+  amountToReceive,
+  maxAmountToSend,
+  assetToReceive
+) {
+  const userKeyPair = Keypair.fromSecret(process.env.VITE_USER_PRIVATE_KEY);
+  let sourceAsset;
+  if (sendAsset.isNative) {
+    sourceAsset = Asset.native();
+  } else {
+    sourceAsset = new Asset(sendAsset.code, sendAsset.issuer);
+  }
+  const destinationAsset = new Asset(
+    assetToReceive.code,
+    assetToReceive.issuer
+  );
+
+  const strictReceiveOperation = Operation.pathPaymentStrictReceive({
+    sendAsset: sourceAsset,
+    sendMax: maxAmountToSend,
+    destination: userKeyPair.publicKey(),
+    destAsset: destinationAsset,
+    destAmount: amountToReceive,
+  });
+
+  const fee = await stellarServer.feeStats();
+  const userAccount = await stellarServer.loadAccount(userKeyPair.publicKey());
+  const transactionBuilder = new TransactionBuilder(userAccount, {
+    fee: fee.fee_charged.p90,
+    networkPassphrase: stellarPassphrase,
+  });
+
+  transactionBuilder.addOperation(strictReceiveOperation);
+
+  const transaction = transactionBuilder.setTimeout(30).build();
+  transaction.sign(userKeyPair);
+  const txResult = await stellarServer.submitTransaction(transaction);
+  if (txResult.successful) {
+    const tx = await stellarServer
+      .payments()
+      .forTransaction(txResult.hash)
+      .call();
+    console.log(`Amount paid: ${tx.records[0].source_amount}`);
+    console.log(
+      `Price per yUSDC: ${new BigNumber(tx.records[0].source_amount)
+        .div(new BigNumber(tx.records[0].amount))
+        .toString()}`
+    );
+  }
 }

@@ -1,6 +1,14 @@
 import inquirer from "inquirer";
-import { findStrictSendPaths, sendStrictAsset } from "./stellar/stellar.js";
-import { calculateMinAmountToReceive } from "./helpers/exchangeHelpers.js";
+import {
+  findStrictSendPaths,
+  findStrictReceivePaths,
+  sendStrictAsset,
+  strictReceiveAsset,
+} from "./stellar/stellar.js";
+import {
+  calculateMinAmountToReceive,
+  calculateMaxAmountToSend,
+} from "./helpers/exchangeHelpers.js";
 import {
   yUSDC as yUSDCInTestnet,
   availableAssets as availableAssetsInTestnet,
@@ -18,7 +26,8 @@ async function exchangeAsset(
   let exchangeRate;
   try {
     exchangeRate = Number(
-      await findStrictSendPaths(assetToExchange, 1, yUSDC, stellarNetwork)
+      // await findStrictSendPaths(assetToExchange, 1, yUSDC, stellarNetwork)
+      await findStrictReceivePaths(assetToExchange, yUSDC, 1, stellarNetwork)
     );
   } catch {
     console.log("No offer available found! Please try with a different asset");
@@ -30,15 +39,25 @@ async function exchangeAsset(
     exchangeRate
   );
   try {
-    await sendStrictAsset(
+    // await sendStrictAsset(
+    //   assetToExchange,
+    //   amountToExchange,
+    //   yUSDC,
+    //   minAmountToReceive
+    // );
+    const maxAmountToSend = calculateMaxAmountToSend(
+      amountToExchange,
+      exchangeRate
+    );
+    const txResult = await strictReceiveAsset(
       assetToExchange,
       amountToExchange,
-      yUSDC,
-      minAmountToReceive
+      maxAmountToSend,
+      yUSDC
     );
     console.log("Successfull exchange!");
     inquireForNewExchanges();
-  } catch {
+  } catch (error) {
     console.log("Transaction failed, please try again");
     enquireAssetExchangeData();
   }
@@ -54,7 +73,11 @@ const assetExchangeEnquiry = [
     name: "assetCode",
     message: "Which asset wuld you like to exchange?",
   },
-  { type: "input", name: "amount", message: "How much?" },
+  {
+    type: "input",
+    name: "amount",
+    message: "How much yUSDC would you like to receive?",
+  },
 ];
 async function enquireAssetExchangeData() {
   inquirer.prompt(assetExchangeEnquiry).then(async (userInputs) => {
