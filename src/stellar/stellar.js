@@ -179,6 +179,12 @@ export async function strictReceiveAsset(
     networkPassphrase: stellarPassphrase,
   });
 
+  const truslineOperation = await setTrustlineOperation(
+    destinationAsset,
+    userKeyPair.publicKey()
+  );
+
+  transactionBuilder.addOperation(truslineOperation);
   transactionBuilder.addOperation(strictReceiveOperation);
 
   const transaction = transactionBuilder.setTimeout(30).build();
